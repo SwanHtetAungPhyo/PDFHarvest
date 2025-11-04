@@ -1,0 +1,52 @@
+# PDF Harvest Configuration
+# Configuration for PITE 2025 Lab Assignment
+
+# Input data
+input_excel: "../doi_data_pite_2025.xlsx"
+doi_column: "doi"
+email: "student@pite.edu"  # Replace with your actual email
+
+# Search strings (case-insensitive)
+# Add terms relevant to your research interest
+strings:
+  - "machine learning"
+  - "artificial intelligence"
+  - "neural network"
+  - "deep learning"
+  - "quantum"
+  - "physics"
+
+# Output settings
+output_dir: "results"
+batch_size: 5           # Process 5 DOIs at a time
+concurrency: 3          # Max 3 concurrent downloads per batch
+write_after_each_batch: true
+
+# Folder structure
+folders:
+  downloads: "downloads"      # Staging area for PDFs
+  found: "output_found"       # PDFs containing search terms
+  notfound: "output_notfound" # PDFs without search terms
+
+# Caching (speeds up re-runs)
+cache:
+  enabled: true
+  force_refresh: false  # Set to true to ignore cache
+
+# HTTP settings
+http:
+  user_agent: "pdfharvest-pite/0.1.0 (+student@pite.edu)"
+  max_keepalive: 10
+  max_connections: 10
+
+# Timeouts (seconds)
+timeouts:
+  read: 30.0
+  connect: 15.0
+
+# Logging
+logging:
+  level: "INFO"
+  file: "harvest.log"
+  rotate_bytes: 10485760  # 10MB
+  backup_count: 3
