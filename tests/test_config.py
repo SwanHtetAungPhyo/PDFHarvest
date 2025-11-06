@@ -6,7 +6,7 @@ import pytest
 import tempfile
 from pathlib import Path
 
-from config import Config, load_config
+from src.config import Config, load_config
 
 
 def test_config_validation():
@@ -50,14 +50,16 @@ http:
 """
     
     with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        temp_path = f.name
         f.write(yaml_content)
         f.flush()
-        
-        config = load_config(f.name)
+    
+    try:
+        config = load_config(temp_path)
         assert config.email == "researcher@university.edu"
         assert config.batch_size == 10
         assert config.logging.level == "DEBUG"
         assert config.http.user_agent == "custom-agent/1.0"
-        
-        # Clean up
-        Path(f.name).unlink()
+    finally:
+        # Clean up - ensure file is closed before deletion
+        Path(temp_path).unlink(missing_ok=True)

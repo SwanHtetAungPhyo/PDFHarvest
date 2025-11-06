@@ -2,7 +2,7 @@
 # Configuration for PITE 2025 Lab Assignment
 
 # Input data
-input_excel: "../doi_data_pite_2025.xlsx"
+input_excel: "doi_data_pite_2025.xlsx"
 doi_column: "doi"
 email: "student@pite.edu"  # Replace with your actual email
 

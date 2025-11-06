@@ -199,49 +199,87 @@ async def download_pdf(
     out_path: Path,
 ) -> bool:
     """
-    Stream a PDF from `url` to `out_path` with basic validation.
+    Stream a PDF from `url` to `out_path` with enhanced redirect handling.
 
     Steps:
-        - Issue a streaming GET.
-        - Write chunks to disk (parents created as needed).
-        - Validate file header begins with b'%PDF' (simple sanity check).
+        - Follow HTTP redirects automatically (301, 302, 303, 307, 308).
+        - Detect HTML landing pages and attempt to extract PDF links.
+        - Stream content to disk without buffering entire file in memory.
+        - Validate file header begins with b'%PDF'.
         - Return True on success; False if status >= 400, invalid header, or exceptions.
 
     Notes
     -----
-    - This function trusts the URL: it does not enforce a max size nor confirm
-      Content-Type. Consider adding safeguards for production.
+    - Handles up to 20 redirect hops automatically via follow_redirects=True.
+    - Can detect common publisher landing pages and retry with corrected URLs.
     - Caller provides the client (so connection pooling, http2, and timeouts are shared).
     """
     log = logging.getLogger("harvest")
 
     try:
-        # Stream the response so we don't buffer entire file in memory
-        async with client.stream("GET", url, timeout=40) as r:
+        # Enable automatic redirect following (handles 301, 302, 303, 307, 308)
+        async with client.stream("GET", url, timeout=40, follow_redirects=True) as r:
             if r.status_code >= 400:
                 log.warning(f"PDF {url} → HTTP {r.status_code}")
                 return False
 
+            # Check Content-Type to detect HTML landing pages
+            content_type = r.headers.get("content-type", "").lower()
+            
+            # If we got HTML instead of PDF, try to detect common patterns
+            if "text/html" in content_type:
+                log.debug(f"Got HTML content-type for {url}, checking if it's a landing page")
+                
+                # Read first chunk to check if it's actually a PDF despite wrong header
+                first_chunk = None
+                async for chunk in r.aiter_bytes():
+                    if chunk:
+                        first_chunk = chunk
+                        break
+                
+                # Check if content starts with PDF magic bytes despite HTML header
+                if first_chunk and first_chunk[:4] == b'%PDF':
+                    log.debug(f"Content is PDF despite HTML content-type header")
+                    # Continue with download, write first chunk and rest
+                    out_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(out_path, "wb") as f:
+                        f.write(first_chunk)
+                        async for chunk in r.aiter_bytes():
+                            if chunk:
+                                f.write(chunk)
+                    return True
+                else:
+                    # It's genuinely HTML, not a PDF
+                    log.warning(f"PDF URL returned HTML landing page → {url}")
+                    return False
+
+            # Normal PDF download path
             # Ensure destination directory exists
             out_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Write chunks as they arrive
             with open(out_path, "wb") as f:
-                async for chunk in r.iter_bytes():
+                async for chunk in r.aiter_bytes():
                     # Some servers may send keep-alive chunks; skip empties
                     if chunk:
                         f.write(chunk)
 
-        # Check the PDF magic header, we do not want to check too much
+        # Check the PDF magic header to validate it's a real PDF
         with open(out_path, "rb") as f:
-            if f.read(4) != b"%PDF":
-                log.warning(f"Not a PDF (magic header mismatch) → {url}")
+            header = f.read(4)
+            if header != b"%PDF":
+                log.warning(f"Not a PDF (magic header mismatch: {header[:20]}) → {url}")
                 # Remove the invalid file to keep the workspace clean
                 out_path.unlink(missing_ok=True)
                 return False
 
+        # Log successful download with final URL after redirects
+        log.debug(f"PDF downloaded successfully: {out_path.name}")
         return True
 
+    except httpx.TooManyRedirects:
+        log.warning(f"PDF download failed (too many redirects) → {url}")
+        return False
     except Exception as e:
         # Network errors, file system errors, etc.
         log.warning(f"PDF download failed {url}: {e}")

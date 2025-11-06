@@ -14,7 +14,7 @@ from tqdm.asyncio import tqdm_asyncio
 from .cache import cache_path, read_cache_json, write_cache_json, ensure_cache_dirs
 from .config import Config, load_config
 from .http import fetch_crossref, fetch_unpaywall, best_pdf_url, download_pdf
-from .logging import setup_logging
+from .log_setup import setup_logging
 from .pdfops import search_pdf, move_pdf_atomic
 
 

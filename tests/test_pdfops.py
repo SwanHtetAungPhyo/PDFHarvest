@@ -5,7 +5,7 @@ Tests for PDF operations.
 import tempfile
 from pathlib import Path
 
-from pdfops import search_pdf, move_pdf_atomic
+from src.pdfops import search_pdf, move_pdf_atomic
 
 
 def test_move_pdf_atomic():
