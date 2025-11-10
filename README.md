@@ -18,21 +18,6 @@ A Python tool for harvesting academic papers via DOI, downloading open access PD
 - **Comprehensive Reporting**: Generate detailed Excel and CSV reports with all metadata and search results
 - **Automated File Organization**: PDFs automatically sorted into folders based on search matches
 
-## 📋 Table of Contents
-
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Configuration](#configuration)
-- [Input Data Format](#input-data-format)
-- [Output Structure](#output-structure)
-- [Testing](#testing)
-- [Architecture](#architecture)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-
 ## 🔧 Requirements
 
 - Python 3.8 or higher
@@ -539,19 +524,3 @@ isort src/ tests/
 mypy src/
 ```
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Crossref** for providing free metadata API
-- **Unpaywall** for open access information
-- **PLOS, MDPI, Frontiers, BMC** for open access publishing
-- All contributors to the open-source libraries used in this project
-
-## 📧 Contact
-
-- **Author**: Swan Htet Aung Phyo
-- **Repository**: [GitHub - PDF_CRAWLER](https://github.com/SwanHtetAungPhyo/PDF_CRAWLER)
-- **Issues**: [Report a bug](https://github.com/SwanHtetAungPhyo/PDF_CRAWLER/issues)
