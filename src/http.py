@@ -17,7 +17,7 @@ import asyncio
 import logging
 import urllib.parse
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import httpx
 
@@ -61,9 +61,9 @@ async def backoff_request(
         Response on success; raises for non-retriable errors or after final failure.
     """
     log = logging.getLogger("harvest")
-    max_tries = 6            # total attempts
-    base = 0.5               # base backoff in seconds
-    cap = 10.0               # max sleep between retries
+    max_tries = 6  # total attempts
+    base = 0.5  # base backoff in seconds
+    cap = 10.0  # max sleep between retries
 
     for i in range(max_tries):
         try:
@@ -77,9 +77,9 @@ async def backoff_request(
                     try:
                         wait = float(ra)
                     except ValueError:
-                        wait = min(base * (2 ** i), cap)
+                        wait = min(base * (2**i), cap)
                 else:
-                    wait = min(base * (2 ** i), cap)
+                    wait = min(base * (2**i), cap)
 
                 log.warning(
                     f"{r.status_code} {url} → backoff {wait:.2f}s (try {i+1}/{max_tries})"
@@ -97,7 +97,7 @@ async def backoff_request(
                 log.error(f"HTTP error {url}: {e}")
                 raise
             # Backoff for transport-layer issues as well
-            wait = min(base * (2 ** i), cap)
+            wait = min(base * (2**i), cap)
             log.warning(f"Transport error {url}: {e} → retry in {wait:.2f}s")
             await asyncio.sleep(wait)
 
@@ -126,10 +126,12 @@ async def fetch_crossref(client: httpx.AsyncClient, doi: str) -> Dict[str, Any]:
     return data.get("message", {}) if isinstance(data, dict) else {}
 
 
-async def fetch_unpaywall(client: httpx.AsyncClient, doi: str, email: str) -> Dict[str, Any]:
+async def fetch_unpaywall(
+    client: httpx.AsyncClient, doi: str, email: str
+) -> Dict[str, Any]:
     """
     Fetch Unpaywall record for a DOI.
-    
+
     Endpoint:
         GET https://api.unpaywall.org/v2/<doi>?email=<your_email>
 
@@ -225,20 +227,22 @@ async def download_pdf(
 
             # Check Content-Type to detect HTML landing pages
             content_type = r.headers.get("content-type", "").lower()
-            
+
             # If we got HTML instead of PDF, try to detect common patterns
             if "text/html" in content_type:
-                log.debug(f"Got HTML content-type for {url}, checking if it's a landing page")
-                
+                log.debug(
+                    f"Got HTML content-type for {url}, checking if it's a landing page"
+                )
+
                 # Read first chunk to check if it's actually a PDF despite wrong header
                 first_chunk = None
                 async for chunk in r.aiter_bytes():
                     if chunk:
                         first_chunk = chunk
                         break
-                
+
                 # Check if content starts with PDF magic bytes despite HTML header
-                if first_chunk and first_chunk[:4] == b'%PDF':
+                if first_chunk and first_chunk[:4] == b"%PDF":
                     log.debug(f"Content is PDF despite HTML content-type header")
                     # Continue with download, write first chunk and rest
                     out_path.parent.mkdir(parents=True, exist_ok=True)

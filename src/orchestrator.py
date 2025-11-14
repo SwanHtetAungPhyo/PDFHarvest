@@ -5,17 +5,17 @@ Main orchestrator for the batched DOI harvesting process.
 import asyncio
 import logging
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import httpx
 import pandas as pd
 from tqdm.asyncio import tqdm_asyncio
 
-from .cache import cache_path, read_cache_json, write_cache_json, ensure_cache_dirs
+from .cache import cache_path, ensure_cache_dirs, read_cache_json, write_cache_json
 from .config import Config, load_config
-from .http import fetch_crossref, fetch_unpaywall, best_pdf_url, download_pdf
+from .http import best_pdf_url, download_pdf, fetch_crossref, fetch_unpaywall
 from .log_setup import setup_logging
-from .pdfops import search_pdf, move_pdf_atomic
+from .pdfops import move_pdf_atomic, search_pdf
 
 
 def ensure_dirs(base: Path, cfg: Config):
@@ -28,11 +28,11 @@ def ensure_dirs(base: Path, cfg: Config):
 
 
 async def prepare_one(
-    doi: str, 
-    cfg: Config, 
-    api_client: httpx.AsyncClient, 
+    doi: str,
+    cfg: Config,
+    api_client: httpx.AsyncClient,
     pdf_client: httpx.AsyncClient,
-    out_dir: Path
+    out_dir: Path,
 ) -> Dict[str, Any]:
     """
     Stage 1 for a DOI:
@@ -44,7 +44,7 @@ async def prepare_one(
     cache_en = cfg.cache.enabled
     force_ref = cfg.cache.force_refresh
     downloads = out_dir / cfg.folders.downloads
-    
+
     # cache files
     xref_cache = cache_path(out_dir, "crossref", doi)
     upw_cache = cache_path(out_dir, "unpaywall", doi)
@@ -60,7 +60,7 @@ async def prepare_one(
                 write_cache_json(xref_cache, meta)
         except Exception:
             meta = {}
-            
+
     if oa is None:
         try:
             oa = await fetch_unpaywall(api_client, doi, cfg.email)
@@ -71,13 +71,14 @@ async def prepare_one(
 
     pdf_url = best_pdf_url(oa)
     temp_pdf = ""
-    
+
     if pdf_url:
         # Always stage to downloads/ first
         from .cache import sanitize_filename
+
         fname = f"{sanitize_filename(doi)}.pdf"
         tgt = downloads / fname
-        
+
         if tgt.exists() and not force_ref:
             temp_pdf = str(tgt)
         else:
@@ -88,34 +89,36 @@ async def prepare_one(
     # flatten some meta now
     title = "; ".join(meta.get("title", []) or [])
     journal = "; ".join(meta.get("container-title", []) or [])
-    
+
     try:
         year = (meta.get("issued", {}).get("date-parts", [[None]])[0] or [None])[0]
     except Exception:
         year = None
-        
-    authors = "; ".join(f"{a.get('given','')} {a.get('family','')}".strip()
-                        for a in (meta.get("author", []) or []))
+
+    authors = "; ".join(
+        f"{a.get('given','')} {a.get('family','')}".strip()
+        for a in (meta.get("author", []) or [])
+    )
 
     row = {
-        "doi": doi, 
-        "title": title, 
-        "journal": journal, 
-        "year": year, 
+        "doi": doi,
+        "title": title,
+        "journal": journal,
+        "year": year,
         "authors": authors,
-        "publisher": meta.get("publisher", ""), 
+        "publisher": meta.get("publisher", ""),
         "type": meta.get("type", ""),
         "crossref_url": meta.get("URL", ""),
         "is_oa": oa.get("is_oa", None),
         "oa_license": (oa.get("best_oa_location") or {}).get("license", None),
         "pdf_url": pdf_url or "",
-        "pdf_temp_path": temp_pdf,      # staged location (downloads/)
-        "pdf_final_path": "",           # will be set in stage 2
-        "match_found": False, 
-        "matched_strings": "", 
+        "pdf_temp_path": temp_pdf,  # staged location (downloads/)
+        "pdf_final_path": "",  # will be set in stage 2
+        "match_found": False,
+        "matched_strings": "",
         "match_pages": "",
     }
-    
+
     log.debug(f"Prepared {doi} | OA={row['is_oa']} | temp_pdf={bool(temp_pdf)}")
     return row
 
@@ -139,7 +142,7 @@ async def process_batch_pdfs(rows: List[Dict[str, Any]], cfg: Config, out_dir: P
     # Build tasks only for rows with a temp PDF and not cached match (unless force_refresh)
     to_process = []
     for r in rows:
-        if not r.get("pdf_temp_path"):   # nothing to process
+        if not r.get("pdf_temp_path"):  # nothing to process
             continue
         m_cache = cache_path(out_dir, "matches", r["doi"])
         cached = read_cache_json(m_cache) if (cache_en and not force_ref) else None
@@ -154,7 +157,9 @@ async def process_batch_pdfs(rows: List[Dict[str, Any]], cfg: Config, out_dir: P
             r["matched_strings"] = ", ".join(cached.get("matches", []))
             r["match_pages"] = ", ".join(map(str, cached.get("pages", [])))
             continue
-        futs.append(loop.run_in_executor(None, search_pdf, Path(r["pdf_temp_path"]), needles))
+        futs.append(
+            loop.run_in_executor(None, search_pdf, Path(r["pdf_temp_path"]), needles)
+        )
 
     # collect fresh parsing results in the same order
     idx = 0
@@ -175,14 +180,16 @@ async def process_batch_pdfs(rows: List[Dict[str, Any]], cfg: Config, out_dir: P
         src = Path(r["pdf_temp_path"])
         if not src.exists():
             continue  # might have been moved already on a previous run
-            
+
         dest_dir = found_dir if r["match_found"] else notfound_dir
         final_path = move_pdf_atomic(src, dest_dir)
         r["pdf_final_path"] = str(final_path)
         # wipe temp path so re-runs won't try to move again
         r["pdf_temp_path"] = ""
-        
-        log.debug(f"Routed {r['doi']} → {'FOUND' if r['match_found'] else 'NOTFOUND'} | {final_path.name}")
+
+        log.debug(
+            f"Routed {r['doi']} → {'FOUND' if r['match_found'] else 'NOTFOUND'} | {final_path.name}"
+        )
 
 
 async def run(cfg_path: str) -> pd.DataFrame:
@@ -205,10 +212,10 @@ async def run(cfg_path: str) -> pd.DataFrame:
     # input
     df = pd.read_excel(cfg.input_excel)
     doi_col = cfg.doi_column
-    
+
     if doi_col not in df.columns:
         raise ValueError(f"Excel must contain column '{doi_col}'")
-        
+
     dois = [str(x).strip() for x in df[doi_col].dropna().tolist()]
     log.info(f"Loaded {len(dois)} DOIs")
 
@@ -218,22 +225,22 @@ async def run(cfg_path: str) -> pd.DataFrame:
         max_keepalive_connections=cfg.http.max_keepalive,
         max_connections=cfg.http.max_connections,
     )
-    timeout = httpx.Timeout(
-        cfg.timeouts.read,
-        connect=cfg.timeouts.connect
-    )
-    
+    timeout = httpx.Timeout(cfg.timeouts.read, connect=cfg.timeouts.connect)
+
     batch_size = cfg.batch_size
     # polite parallelism *within a batch* (metadata+downloads)
     per_batch_concurrency = cfg.concurrency
 
     all_rows: List[Dict[str, Any]] = []
-    
-    async with httpx.AsyncClient(headers=headers, limits=limits, timeout=timeout, http2=False) as api_client, \
-               httpx.AsyncClient(headers=headers, limits=limits, timeout=timeout, http2=False) as pdf_client:
+
+    async with httpx.AsyncClient(
+        headers=headers, limits=limits, timeout=timeout, http2=False
+    ) as api_client, httpx.AsyncClient(
+        headers=headers, limits=limits, timeout=timeout, http2=False
+    ) as pdf_client:
 
         for start in range(0, len(dois), batch_size):
-            chunk = dois[start:start + batch_size]
+            chunk = dois[start : start + batch_size]
             log.info(f"Batch {start//batch_size + 1}: preparing {len(chunk)} DOIs")
             sem = asyncio.Semaphore(per_batch_concurrency)
 
@@ -243,7 +250,9 @@ async def run(cfg_path: str) -> pd.DataFrame:
                     return await prepare_one(doi, cfg, api_client, pdf_client, out_dir)
 
             prep_tasks = [prep_wrapped(doi) for doi in chunk]
-            rows = await tqdm_asyncio.gather(*prep_tasks, total=len(prep_tasks), desc="Stage 1: prepare+download")
+            rows = await tqdm_asyncio.gather(
+                *prep_tasks, total=len(prep_tasks), desc="Stage 1: prepare+download"
+            )
 
             # ------ Stage 2: processing (no network; only CPU and file moves) ------
             log.info(f"Batch {start//batch_size + 1}: processing PDFs")

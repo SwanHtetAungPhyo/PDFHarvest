@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field, validator
 
 class LoggingConfig(BaseModel):
     """Logging configuration."""
+
     level: str = "INFO"
     file: str = "harvest.log"
     rotate_bytes: int = 10_485_760  # 10MB
@@ -21,6 +22,7 @@ class LoggingConfig(BaseModel):
 
 class HttpConfig(BaseModel):
     """HTTP client configuration."""
+
     user_agent: str = "pdfharvest/0.1.0"
     max_keepalive: int = 20
     max_connections: int = 20
@@ -28,18 +30,21 @@ class HttpConfig(BaseModel):
 
 class TimeoutConfig(BaseModel):
     """Timeout configuration."""
+
     read: float = 30.0
     connect: float = 15.0
 
 
 class CacheConfig(BaseModel):
     """Cache configuration."""
+
     enabled: bool = True
     force_refresh: bool = False
 
 
 class FoldersConfig(BaseModel):
     """Output folder configuration."""
+
     downloads: str = "downloads"
     found: str = "output_found"
     notfound: str = "output_notfound"
@@ -47,6 +52,7 @@ class FoldersConfig(BaseModel):
 
 class Config(BaseModel):
     """Main configuration model."""
+
     input_excel: str
     doi_column: str = "doi"
     email: str
@@ -55,29 +61,29 @@ class Config(BaseModel):
     batch_size: int = 5
     concurrency: int = 6
     write_after_each_batch: bool = True
-    
+
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     http: HttpConfig = Field(default_factory=HttpConfig)
     timeouts: TimeoutConfig = Field(default_factory=TimeoutConfig)
     cache: CacheConfig = Field(default_factory=CacheConfig)
     folders: FoldersConfig = Field(default_factory=FoldersConfig)
 
-    @validator('email')
+    @validator("email")
     def validate_email(cls, v):
-        if '@' not in v:
-            raise ValueError('Email must contain @ symbol')
+        if "@" not in v:
+            raise ValueError("Email must contain @ symbol")
         return v
 
-    @validator('strings')
+    @validator("strings")
     def validate_strings(cls, v):
         if not v:
-            raise ValueError('At least one search string must be provided')
+            raise ValueError("At least one search string must be provided")
         return v
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> Config:
         """Load configuration from YAML file."""
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         return cls(**data)
 

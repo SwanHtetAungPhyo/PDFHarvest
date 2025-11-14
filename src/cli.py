@@ -16,24 +16,18 @@ def main():
         description="Batched DOI harvester: staged downloads → processing → routed outputs"
     )
     parser.add_argument(
-        "--config", 
-        required=True, 
-        help="Path to YAML configuration file"
+        "--config", required=True, help="Path to YAML configuration file"
     )
-    parser.add_argument(
-        "--version", 
-        action="version", 
-        version="pdfharvest 0.1.0"
-    )
-    
+    parser.add_argument("--version", action="version", version="pdfharvest 0.1.0")
+
     args = parser.parse_args()
-    
+
     # Validate config file exists
     config_path = Path(args.config)
     if not config_path.exists():
         print(f"Error: Configuration file '{config_path}' not found", file=sys.stderr)
         sys.exit(1)
-    
+
     try:
         # Run the harvester
         result_df = asyncio.run(run(str(config_path)))

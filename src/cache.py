@@ -5,18 +5,18 @@ Simple JSON cache utilities for caching API responses.
 import json
 import re
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 
 def sanitize_filename(s: str) -> str:
     """
     Sanitize a string to be safe for use as a filename.
-    
+
     Parameters
     ----------
     s : str
         Input string (typically a DOI)
-        
+
     Returns
     -------
     str
@@ -29,7 +29,7 @@ def sanitize_filename(s: str) -> str:
 def cache_path(base: Path, namespace: str, doi: str) -> Path:
     """
     Generate cache file path for a DOI in a specific namespace.
-    
+
     Parameters
     ----------
     base : Path
@@ -38,7 +38,7 @@ def cache_path(base: Path, namespace: str, doi: str) -> Path:
         Cache namespace (e.g., 'crossref', 'unpaywall', 'matches')
     doi : str
         DOI identifier
-        
+
     Returns
     -------
     Path
@@ -50,12 +50,12 @@ def cache_path(base: Path, namespace: str, doi: str) -> Path:
 def read_cache_json(path: Path) -> Optional[Dict[str, Any]]:
     """
     Read JSON data from cache file.
-    
+
     Parameters
     ----------
     path : Path
         Path to cache file
-        
+
     Returns
     -------
     dict or None
@@ -72,7 +72,7 @@ def read_cache_json(path: Path) -> Optional[Dict[str, Any]]:
 def write_cache_json(path: Path, data: Dict[str, Any]) -> None:
     """
     Write JSON data to cache file.
-    
+
     Parameters
     ----------
     path : Path
@@ -83,18 +83,18 @@ def write_cache_json(path: Path, data: Dict[str, Any]) -> None:
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps(data, ensure_ascii=False, indent=2), 
-            encoding="utf-8"
+            json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     except Exception as e:
         import logging
+
         logging.getLogger("harvest").warning(f"Cache write failed {path}: {e}")
 
 
 def ensure_cache_dirs(base: Path) -> None:
     """
     Ensure all cache directories exist.
-    
+
     Parameters
     ----------
     base : Path
