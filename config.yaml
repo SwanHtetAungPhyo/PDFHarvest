@@ -48,5 +48,5 @@ timeouts:
 logging:
   level: "INFO"
   file: "harvest.log"
-  rotate_bytes: 10485760  # 10MB
+  rotate_bytes: 10485760  
   backup_count: 3

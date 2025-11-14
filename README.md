@@ -1,8 +1,8 @@
-# PDF Harvest 📚
+# PDF Harvest
 
 A Python tool for harvesting academic papers via DOI, downloading open access PDFs, and searching them for specific content.
 
-## 🌟 Features
+## Features
 
 - **Batch Processing**: Process DOIs in configurable batches with controlled concurrency for optimal performance
 - **API Integration**: Automatic metadata fetching from Crossref and open access information from Unpaywall
@@ -18,7 +18,7 @@ A Python tool for harvesting academic papers via DOI, downloading open access PD
 - **Comprehensive Reporting**: Generate detailed Excel and CSV reports with all metadata and search results
 - **Automated File Organization**: PDFs automatically sorted into folders based on search matches
 
-## 🔧 Requirements
+## Requirements
 
 - Python 3.8 or higher
 - Required packages:
@@ -30,7 +30,7 @@ A Python tool for harvesting academic papers via DOI, downloading open access PD
   - `pydantic>=2.0.0` - Data validation
   - `openpyxl` - Excel file support
 
-## 📦 Installation
+## Installation
 
 ### Option 1: From Source (Recommended for Development)
 
@@ -59,7 +59,7 @@ pip install pytest pytest-asyncio pytest-cov black isort mypy
 pip install -e ".[dev]"
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Create an Excel file** with DOIs (e.g., `my_dois.xlsx`):
    
@@ -91,7 +91,7 @@ pdfharvest --config config.yaml
 
 4. **Check results** in the `results/` folder!
 
-## 💻 Usage
+## Usage
 
 ### Command Line Interface
 
@@ -118,8 +118,8 @@ from src.orchestrator import run
 # Run the harvester
 async def main():
     result_df = await run("config.yaml")
-    print(f"✅ Processed {len(result_df)} DOIs")
-    print(f"📄 Found {result_df['match_found'].sum()} PDFs with keywords")
+    print(f"Processed {len(result_df)} DOIs")
+    print(f"Found {result_df['match_found'].sum()} PDFs with keywords")
     return result_df
 
 # Execute
@@ -138,7 +138,7 @@ Stage 1: prepare+download: 100%|████████████████
 Harvesting completed successfully. Processed 5 DOIs.
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 Create a YAML configuration file with the following structure:
 
@@ -194,16 +194,16 @@ logging:
 
 | Parameter | Description | Default | Required |
 |-----------|-------------|---------|----------|
-| `input_excel` | Path to Excel file with DOIs | - | ✅ Yes |
-| `doi_column` | Name of column containing DOIs | "doi" | ✅ Yes |
-| `email` | Your email (required by Unpaywall) | - | ✅ Yes |
-| `strings` | List of keywords to search in PDFs | [] | ✅ Yes |
-| `output_dir` | Directory for results | "results" | ❌ No |
-| `batch_size` | Number of DOIs per batch | 5 | ❌ No |
-| `concurrency` | Concurrent downloads per batch | 3 | ❌ No |
-| `write_after_each_batch` | Save incremental reports | true | ❌ No |
+| `input_excel` | Path to Excel file with DOIs | - | Yes |
+| `doi_column` | Name of column containing DOIs | "doi" | Yes |
+| `email` | Your email (required by Unpaywall) | - | Yes |
+| `strings` | List of keywords to search in PDFs | [] | Yes |
+| `output_dir` | Directory for results | "results" | No |
+| `batch_size` | Number of DOIs per batch | 5 | No |
+| `concurrency` | Concurrent downloads per batch | 3 | No |
+| `write_after_each_batch` | Save incremental reports | true | No |
 
-## 📊 Input Data Format
+## Input Data Format
 
 Your Excel file should contain a column with DOI identifiers:
 
@@ -218,32 +218,32 @@ Your Excel file should contain a column with DOI identifiers:
 - `.xls` (Excel 97-2003)
 - Any format supported by `pandas.read_excel()`
 
-## 📁 Output Structure
+## Output Structure
 
 ```
 results/
-├── 📁 logs/
+├── logs/
 │   └── harvest.log              # Detailed execution logs with timestamps
 │
-├── 📁 cache/                    # Cached API responses (speeds up re-runs)
-│   ├── 📁 crossref/            # Crossref metadata (JSON)
-│   ├── 📁 unpaywall/           # Unpaywall OA info (JSON)
-│   └── 📁 matches/             # PDF search results (JSON)
+├── cache/                       # Cached API responses (speeds up re-runs)
+│   ├── crossref/               # Crossref metadata (JSON)
+│   ├── unpaywall/              # Unpaywall OA info (JSON)
+│   └── matches/                # PDF search results (JSON)
 │
-├── 📁 downloads/                # Temporary staging area for PDFs
+├── downloads/                   # Temporary staging area for PDFs
 │
-├── 📁 output_found/             # ✅ PDFs containing your keywords
+├── output_found/                # PDFs containing your keywords
 │   ├── 10.1234_example1.pdf
 │   └── 10.5678_example2.pdf
 │
-├── 📁 output_notfound/          # ❌ PDFs without keyword matches
+├── output_notfound/             # PDFs without keyword matches
 │   └── 10.9012_example3.pdf
 │
-├── 📄 report.xlsx               # Comprehensive results (Excel format)
-└── 📄 report.csv                # Same data in CSV format
+├── report.xlsx                  # Comprehensive results (Excel format)
+└── report.csv                   # Same data in CSV format
 ```
 
-## 📈 Report Columns
+## Report Columns
 
 The generated `report.xlsx` includes the following columns:
 
@@ -273,7 +273,7 @@ The generated `report.xlsx` includes the following columns:
 - `pdf_temp_path` - Temporary download location (staging)
 - `pdf_final_path` - Final location (output_found/ or output_notfound/)
 
-## 🧪 Testing
+## Testing
 
 The project includes comprehensive unit tests with 100% pass rate.
 
@@ -295,9 +295,9 @@ python -m pytest tests/test_http.py::test_best_pdf_url -v
 
 ### Test Statistics
 
-- ✅ **15 tests** (100% passing)
-- 📊 **54% code coverage**
-- 🧪 Test categories:
+- **15 tests** (100% passing)
+- **54% code coverage**
+- Test categories:
   - Configuration validation (2 tests)
   - HTTP utilities & APIs (3 tests)
   - PDF download with redirects (6 tests)
@@ -318,11 +318,11 @@ df = pd.DataFrame({
     ]
 })
 df.to_excel('test_dois.xlsx', index=False)
-print('✅ Created test_dois.xlsx')
+print('Created test_dois.xlsx')
 "
 ```
 
-## 🛠️ Development
+## Development
 
 ### Code Quality Tools
 
@@ -367,7 +367,7 @@ PDF_CRAWLER/
 └── .gitignore              # Git ignore patterns
 ```
 
-## 🏗️ Architecture
+## Architecture
 
 ### Two-Stage Batched Processing
 
@@ -422,22 +422,22 @@ URL Request
 [follow_redirects=True]
     ↓
 Check Status Code
-    ├─ 200-299: Continue ✅
-    ├─ 301-308: Follow redirect automatically 🔄
-    └─ 400+: Abort ❌
+    ├─ 200-299: Continue
+    ├─ 301-308: Follow redirect automatically
+    └─ 400+: Abort
     ↓
 Check Content-Type
-    ├─ application/pdf: Download ✅
+    ├─ application/pdf: Download
     └─ text/html: Check first bytes
-        ├─ Starts with %PDF: Download anyway ✅
-        └─ Actually HTML: Skip ❌
+        ├─ Starts with %PDF: Download anyway
+        └─ Actually HTML: Skip
     ↓
 Validate PDF Header
-    ├─ Valid %PDF: Keep file ✅
-    └─ Invalid: Delete & report ❌
+    ├─ Valid %PDF: Keep file
+    └─ Invalid: Delete & report
 ```
 
-## 🌐 API Information
+## API Information
 
 ### Crossref API
 - **Endpoint**: `https://api.crossref.org/works/{doi}`
