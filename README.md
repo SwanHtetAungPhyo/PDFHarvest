@@ -375,9 +375,9 @@ The system uses an efficient two-stage batched approach to optimize resource usa
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        STAGE 1                               │
-│              Concurrent Metadata + Download                  │
-│  (Network I/O - Async, Parallelized with Semaphore)        │
+│                        STAGE 1                              │
+│              Concurrent Metadata + Download                 │
+│  (Network I/O - Async, Parallelized with Semaphore)         │
 └──────────────────────────┬──────────────────────────────────┘
                            │
                            ▼
@@ -387,8 +387,8 @@ The system uses an efficient two-stage batched approach to optimize resource usa
                            │
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                        STAGE 2                               │
-│              Sequential PDF Processing                       │
+│                        STAGE 2                              │
+│              Sequential PDF Processing                      │
 │     (CPU-bound - Thread Pool for PDF Parsing)               │
 └─────────────────────────────────────────────────────────────┘
 ```
