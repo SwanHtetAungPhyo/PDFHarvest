@@ -3,9 +3,9 @@ Tests for HTTP utilities.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from http import best_pdf_url, fetch_crossref, fetch_unpaywall
+from src.http import best_pdf_url, fetch_crossref, fetch_unpaywall
 
 
 def test_best_pdf_url():
@@ -55,17 +55,10 @@ async def test_fetch_crossref():
     }
     
     # Mock the backoff_request function
-    import http
-    original_backoff = http.backoff_request
-    http.backoff_request = AsyncMock(return_value=mock_response)
-    
-    try:
+    with patch('src.http.backoff_request', new=AsyncMock(return_value=mock_response)):
         result = await fetch_crossref(mock_client, "10.1000/test")
         assert result["title"] == ["Test Paper"]
         assert len(result["author"]) == 1
-    finally:
-        # Restore original function
-        http.backoff_request = original_backoff
 
 
 @pytest.mark.asyncio
@@ -83,14 +76,7 @@ async def test_fetch_unpaywall():
     }
     
     # Mock the backoff_request function
-    import http
-    original_backoff = http.backoff_request
-    http.backoff_request = AsyncMock(return_value=mock_response)
-    
-    try:
+    with patch('src.http.backoff_request', new=AsyncMock(return_value=mock_response)):
         result = await fetch_unpaywall(mock_client, "10.1000/test", "test@example.com")
         assert result["is_oa"] is True
         assert "best_oa_location" in result
-    finally:
-        # Restore original function
-        http.backoff_request = original_backoff

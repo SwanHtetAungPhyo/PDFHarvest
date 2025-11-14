@@ -7,8 +7,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
-from config import Config
-from orchestrator import ensure_dirs
+from src.config import Config
+from src.orchestrator import ensure_dirs
 
 
 def test_ensure_dirs():
@@ -37,7 +37,7 @@ def test_ensure_dirs():
 @pytest.mark.asyncio
 async def test_prepare_one():
     """Test single DOI preparation."""
-    from orchestrator import prepare_one
+    from src.orchestrator import prepare_one
     
     with tempfile.TemporaryDirectory() as tmpdir:
         out_dir = Path(tmpdir)
@@ -52,9 +52,9 @@ async def test_prepare_one():
         pdf_client = AsyncMock()
         
         # Mock the fetch functions
-        with patch('pdfharvest.orchestrator.fetch_crossref') as mock_crossref, \
-             patch('pdfharvest.orchestrator.fetch_unpaywall') as mock_unpaywall, \
-             patch('pdfharvest.orchestrator.best_pdf_url') as mock_best_pdf:
+        with patch('src.orchestrator.fetch_crossref') as mock_crossref, \
+             patch('src.orchestrator.fetch_unpaywall') as mock_unpaywall, \
+             patch('src.orchestrator.best_pdf_url') as mock_best_pdf:
             
             mock_crossref.return_value = {
                 "title": ["Test Paper"],
